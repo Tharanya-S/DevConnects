@@ -2,34 +2,34 @@ const express = require("express");
 
 const app = express();
 
-app.use("/test", (req, res) => {
-  res.send("Here is the Testing page");
-});
-
-app.use("/hello", (req, res) => {
-  res.send("Hello World !!!");
-});
-
-app.get("/user", (req, res) => {
-  res.send({ firstName: "Tharanya", lastName: "Sugumaran" });
-});
-
-app.post("/user", (req, res) => {
-  //Logic to add data
-  res.send("Users added successfully");
-});
-
-app.patch("/user", (req, res) => {
-  res.send("Patched user successfully");
-});
-
-app.delete("/user", (req, res) => {
-  res.send("Deleted user successfully");
-});
-
-app.use("/", (req, res) => {
-  res.send("Server Running Successfully");
-}); //this should always come at time as '/' is the prefix for all route
+app.get("/user", [
+  (req, res, next) => {
+    console.log("Route Handler 1");
+    // res.send("Route Handler 1");
+    next();
+  },
+  [
+    (req, res, next) => {
+      // res.send("Route Handler 2");
+      console.log("Route Handler 2");
+      next();
+    },
+    (req, res, next) => {
+      // res.send("Route Handler 3");
+      console.log("Route Handler 3");
+      next();
+    },
+  ],
+  (req, res, next) => {
+    // res.send("Route Handler 4");
+    console.log("Route Handler 4");
+    next();
+  },
+  (req, res) => {
+    console.log("Route Handler 5");
+    res.send("Route Handler 5");
+  },
+]);
 
 app.listen(7777, () => {
   console.log("Server running successfully on Port : 7777");
