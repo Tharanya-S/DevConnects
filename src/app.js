@@ -1,22 +1,28 @@
 const express = require("express");
-const { adminAuth, userAuth } = require("../middlewares/auth");
 
 const app = express();
 
-app.use("/admin", adminAuth);
+// app.use("/", (err, req, res, next) => {
+//   res.status(500).send("Error in the Api");
+// });
 
-app.use("/admin/getAllAdmin", (req, res, next) => {
-  res.send("Admin Data sent successfully");
-  console.log("Admin authentication done successfully");
+app.use("/admin", (req, res) => {
+  throw new Error();
+  res.send("Admin Api");
 });
 
-app.use("/user/login", (req, res) => {
-  res.send("User logged in successfully");
+app.use("/user", (req, res) => {
+  try {
+    // throw new Error();
+    res.send("User Api");
+  } catch {
+    res.status(500).send("Error in user Api");
+  }
 });
 
-app.use("/user/getUsersDetails", userAuth, (req, res, next) => {
-  res.send("User details sent successfully");
-  console.log("User data sent successfully");
+app.use("/", (err, req, res, next) => {
+  //write this at the end always it is like a wildcard
+  res.status(500).send("Error in the Api");
 });
 
 app.listen(7777, () => {
