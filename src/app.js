@@ -16,7 +16,7 @@ app.post("/signup", async (req, res) => {
     res.send("User added successfully");
   } catch (err) {
     console.log("User could not be updated");
-    res.status(401).send("User failed to update");
+    res.status(401).send("User failed to update" + err.message);
   }
 });
 
