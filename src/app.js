@@ -69,17 +69,29 @@ app.delete("/user", async (req, res) => {
 });
 
 //API - find and update by Id
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
   const data = req.body;
+  // console.log("skills", data.skills);
   try {
+    const ALLOWED_UPDATES = ["age", "skills", "lastName"];
+    const isUpdateAllowed = Object.keys(data).every((key) =>
+      ALLOWED_UPDATES.includes(key)
+    );
+
+    if (!isUpdateAllowed) {
+      throw new Error("Invalid to update");
+    }
+    if (data.skills?.length > 10) {
+      throw new Error("Cannot enter more then 10 skills");
+    }
     const user = await UserSchema.findByIdAndUpdate(userId, data, {
       returnDocument: "after",
     });
     res.send("User Updated successfully");
-    console.log(user);
+    // console.log(user);
   } catch (err) {
-    res.status(401).send("Error Occurred");
+    res.status(400).send("Error Occurred" + err.message);
   }
 });
 
