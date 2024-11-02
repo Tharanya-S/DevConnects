@@ -4,10 +4,13 @@ const { connectDB } = require("./config/database");
 const { validateSignUpData } = require("./utils/validations");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
@@ -54,13 +57,43 @@ app.post("/login", async (req, res) => {
     //check if the currentUser.password is same as the password given by the user now
     const passwordCheck = await bcrypt.compare(password, currentUser.password);
 
-    if (!passwordCheck) {
-      throw new Error("Invaild crendentials");
-    } else {
+    if (passwordCheck) {
+      //create the JWT token
+      const token = jwt.sign({ _id: currentUser._id }, "DevConnects$1206");
+
+      //Add the token to the cookie and send the along with the response
+      // res.cookie(
+      //   "token",
+      //   "jhfjkhsafkhsdakfhasoiwwbrwioqpuwnczlkhcjnl294284uibdfus8"
+      // );
+
+      res.cookie("token", token);
+
       res.send("Login successfull");
+    } else {
+      throw new Error("Invaild crendentials");
     }
   } catch (err) {
     res.status(401).send("Error : " + err.message);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+
+    //validating the cookie
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("Invalid Token");
+    }
+
+    const decodedMessage = await jwt.verify(token, "DevConnects$1206");
+
+    const loggedInUser = await UserSchema.findById(decodedMessage._id).exec();
+    res.send(loggedInUser);
+  } catch (err) {
+    res.status(400).send("Login unsuccessfull");
   }
 });
 
