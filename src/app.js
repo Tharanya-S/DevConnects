@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 const app = express();
 
@@ -59,15 +60,14 @@ app.post("/login", async (req, res) => {
 
     if (passwordCheck) {
       //create the JWT token
-      const token = jwt.sign({ _id: currentUser._id }, "DevConnects$1206");
+      const token = jwt.sign({ _id: currentUser._id }, "DevConnects$1206", {
+        expiresIn: "7d",
+      });
 
-      //Add the token to the cookie and send the along with the response
-      // res.cookie(
-      //   "token",
-      //   "jhfjkhsafkhsdakfhasoiwwbrwioqpuwnczlkhcjnl294284uibdfus8"
-      // );
-
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 900000),
+        httpOnly: true,
+      });
 
       res.send("Login successfull");
     } else {
@@ -78,22 +78,21 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-
-    //validating the cookie
-    const { token } = cookies;
-    if (!token) {
-      throw new Error("Invalid Token");
-    }
-
-    const decodedMessage = await jwt.verify(token, "DevConnects$1206");
-
-    const loggedInUser = await UserSchema.findById(decodedMessage._id).exec();
+    const loggedInUser = req.user;
     res.send(loggedInUser);
   } catch (err) {
     res.status(400).send("Login unsuccessfull");
+  }
+});
+
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(user.firstName + " has sent the connection request");
+  } catch (err) {
+    res.status(400).send("Error " + err.message);
   }
 });
 
