@@ -11,7 +11,7 @@ PATCH /profite/edit
 PATCH /profite/password
 
 connectionRequestRouter
-POST /request/send/intereted/ :userld
+POST /request/send/intrested/ :userld
 POST /request/send/ignored/:userld
 POST /request/review/accepted/: requestld
 POST request/review/rejected/:requestld
