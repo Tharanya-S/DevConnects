@@ -10,8 +10,8 @@ requestRouter.post(
   userAuth,
   async (req, res) => {
     try {
-      const fromUserId = req.params.userId; //sender
-      const toUserId = req.user._id; //receiver
+      const fromUserId = req.user._id; //sender
+      const toUserId = req.params.userId; //receiver
       const status = req.params.status;
 
       //validations
@@ -58,6 +58,47 @@ requestRouter.post(
       });
     } catch (err) {
       res.status(400).send(`ERROR ` + err.message);
+    }
+  }
+);
+
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const loggedInUser = req.user;
+      // const requestId = req.params.requestId;
+      // const status = req.params.status;
+      const { requestId, status } = req.params;
+
+      //validations
+      //1.check if the status is correct
+      const allowedStatusList = ["accepted", "rejected"];
+      if (!allowedStatusList.includes(status)) {
+        throw new Error("Incorrect status");
+      }
+
+      //2.Check if the request Id exist in the requestConnectionList
+      const connectionRequest = await ConnectionRequestSchema.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "interested",
+      });
+
+      if (!connectionRequest) {
+        throw new Error("Request does not exist");
+      }
+
+      connectionRequest.status = status;
+      await connectionRequest.save();
+
+      res.json({
+        message: `User ${status} the request`,
+        data: connectionRequest,
+      });
+    } catch (err) {
+      res.status(400).send("ERROR " + err.message);
     }
   }
 );

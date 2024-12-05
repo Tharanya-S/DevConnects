@@ -5,15 +5,17 @@ const ConnectionRequestSchema = new mongoose.Schema(
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "UserSchema",
     },
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "UserSchema",
     },
     status: {
       type: String,
       enum: {
-        values: ["accepted", "rejected", "intrested", "ignored"],
+        values: ["accepted", "rejected", "interested", "ignored"],
         message: [`{VALUES} is not accepted `],
       },
       required: true,
@@ -33,7 +35,6 @@ ConnectionRequestSchema.pre("save", function () {
   if (connectionRequest.fromUserId.equals(this.toUserId)) {
     throw new Error("The to and from user Id are same");
   }
-  next();
 });
 
 module.exports = mongoose.model(
