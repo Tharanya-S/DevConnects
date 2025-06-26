@@ -6,17 +6,21 @@ const userAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Invalid token!!!");
+      throw new Error("Please login!");
     }
     //decode the data using this token
     const decodedObj = await jwt.verify(token, "DevConnects$1206");
     const { _id } = decodedObj;
     const loggedInUser = await UserSchema.findById(_id).exec();
     req.user = loggedInUser;
-    next();
+    next();//very important to move to request handler
   } catch (err) {
     res.status(401).send("Error " + err.message);
   }
 };
 
 module.exports = { userAuth };
+
+//Read the token from the req cookies
+//Validate the token 
+//Find the user

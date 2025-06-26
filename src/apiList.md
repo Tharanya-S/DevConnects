@@ -2,7 +2,7 @@
 
 authRouter
 POST /signup
-POST /togin
+POST /login
 POST /logout
 
 profiteRouter

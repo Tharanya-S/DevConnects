@@ -9,7 +9,7 @@ const profileRouter = express.Router();
 profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
-    res.send(loggedInUser);
+    res.json({ data: loggedInUser });
   } catch (err) {
     res.status(400).send("Login unsuccessfull");
   }
@@ -30,7 +30,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     Object.keys(req.body).forEach((key) => (loggedInUser[key] = req.body[key]));
 
     //save the edited fields
-    await loggedInUser.save();
+    await loggedInUser.save(); //to make the changes in the db
 
     //send respose
     res.json({

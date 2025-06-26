@@ -16,7 +16,6 @@ requestRouter.post(
 
       //validations
       //1.if the request already exist and if the receiver of the request has already sent a request
-
       const requestExistCheck = await ConnectionRequestSchema.findOne({
         $or: [
           { fromUserId, toUserId },
@@ -26,6 +25,12 @@ requestRouter.post(
           },
         ],
       });
+
+      let validStatus = ["interested", "ignored"];
+
+      if (!validStatus.includes(status)) {
+        throw new Error("Please enter valid status");
+      }
 
       if (requestExistCheck) {
         throw new Error("Request already exist");
@@ -80,6 +85,7 @@ requestRouter.post(
       }
 
       //2.Check if the request Id exist in the requestConnectionList
+      // toUser has to be the loggedInUser and the status has to be intreseted
       const connectionRequest = await ConnectionRequestSchema.findOne({
         _id: requestId,
         toUserId: loggedInUser._id,

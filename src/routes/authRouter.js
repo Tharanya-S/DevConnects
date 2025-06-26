@@ -4,6 +4,7 @@ const UserSchema = require("../models/user");
 const { validateSignUpData } = require("../utils/validations");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
+// const {validatePassword,getJWT} = require("../models/user")
 
 const authRouter = express.Router();
 
@@ -12,7 +13,16 @@ authRouter.post("/signup", async (req, res) => {
     //1.validate the data
     validateSignUpData(req);
 
-    const { firstName, lastName, emailId, password } = req.body; //Now this allows only this 4 fields to enter the database
+    const {
+      firstName,
+      lastName,
+      emailId,
+      password,
+      skills,
+      photoUrl,
+      age,
+      gender,
+    } = req.body; //Now this allows only this 4 fields to enter the database
 
     //2.encrypting the password
     const passwordHash = await bcrypt.hash(password, 10);
@@ -24,10 +34,25 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       emailId,
       password: passwordHash,
+      skills,
+      photoUrl,
+      age,
+      gender,
     }); //unwanted data from the req.body will be ignored
 
-    await user.save();
-    res.send("User added successfully");
+    const savedUser = await user.save();
+    const token = jwt.sign({ _id: savedUser._id }, "DevConnects$1206", {
+      expiresIn: "7d", //expiration for the jwt
+    });
+
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 900000009), //expiration for cookie
+    });
+
+    res.json({
+      message: `${savedUser.firstName} has been successfully logged In`,
+      data: savedUser,
+    });
   } catch (err) {
     res.status(401).send("User failed to update " + err.message);
   }
@@ -48,19 +73,26 @@ authRouter.post("/login", async (req, res) => {
     }
 
     //check if the currentUser.password is same as the password given by the user now
+    // const passwordCheck = await UserSchema.validatePassword(password);
     const passwordCheck = await bcrypt.compare(password, currentUser.password);
 
     if (passwordCheck) {
       //create the JWT token
-      const token = jwt.sign({ _id: currentUser._id }, "DevConnects$1206", {
-        expiresIn: "7d",
-      });
+      const token =
+        // await UserSchema.getJWT();
+
+        jwt.sign({ _id: currentUser._id }, "DevConnects$1206", {
+          expiresIn: "7d", //expiration for the jwt
+        });
 
       res.cookie("token", token, {
-        expires: new Date(Date.now() + 900000009),
+        expires: new Date(Date.now() + 900000009), //expiration for cookie
       });
 
-      res.send("Login successfull");
+      res.json({
+        message: `${currentUser.firstName} has been successfully logged In`,
+        data: currentUser,
+      });
     } else {
       throw new Error("Invaild crendentials");
     }
@@ -72,6 +104,7 @@ authRouter.post("/login", async (req, res) => {
 authRouter.post("/logout", async (req, res) => {
   res.cookie("token", null, { expires: new Date(Date.now()) });
   res.send("User logged out successfully");
+  // res.cookie("token", null, { expires: new Date(Date.now()) }).send("User logged out successfully"); => chaining
 });
 
 module.exports = authRouter;

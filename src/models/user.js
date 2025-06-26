@@ -41,10 +41,15 @@ const UserSchema = new mongoose.Schema(
     gender: {
       type: String,
       validate(value) {
-        if (!["male", "female", "others"].includes(value)) {
+        if (!["Male", "Female", "Others"].includes(value)) {
           throw new Error("You have entered invalid gender");
         }
       },
+    },
+    photoUrl: {
+      type: String,
+      default:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2xu5deRsNTGJwV2qkcMN4-r_q2O3_mMYprrIQufUMrf12fOKYm4a0l1y0QKls_TQqgV0&usqp=CAU",
     },
     skills: {
       type: Array,
@@ -53,17 +58,19 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-UserSchema.methods.getJWT = async function () {
-  const user = this;
+UserSchema.methods.getJWT = async function () {//do not user arrow function
+  const user = this;//using the userSchema model i am crreatinga instance of the model so when i use this it reference to the current instance
+  
   const token = await jwt.sign({ _id: user._id }, "DevConnects$1206", {
     expiresIn: "7d",
   });
+  
   return token;
 };
 
 UserSchema.methods.validatePassword = async function (passwordByUser) {
   const user = this;
-  const passwordHash = user.password;
+  const passwordHash = user.password;//this.password
   const passwordvalidator = await bcrypt.compare(passwordByUser, passwordHash);
   return passwordvalidator;
 };

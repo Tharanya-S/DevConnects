@@ -9,18 +9,16 @@ userRouter.get("/users/request/received", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
-    const connectionRequest1 = await ConnectionRequestSchema.find({
+    const connectionRequest = await ConnectionRequestSchema.find({
       toUserId: loggedInUser._id.toString(),
       status: "interested",
     })
-      .populate("fromUserId", ["firstName", "lastName"])
+      .populate("fromUserId", ["firstName", "lastName", "photoUrl"])
       .exec();
 
-    console.log(connectionRequest1);
-
     res.json({
-      message: "The request received ",
-      data: connectionRequest1,
+      message: "The list of request received",
+      data: connectionRequest,
     });
   } catch (err) {
     res.status(400).send("ERROR " + err.message);
@@ -29,20 +27,21 @@ userRouter.get("/users/request/received", userAuth, async (req, res) => {
 
 userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
-    const loggendInUser = req.user;
+    const loggedInUser = req.user;
 
     const connectionRequest = await ConnectionRequestSchema.find({
       $or: [
-        { fromUserId: loggendInUser._id, status: "accepted" },
-        { toUserId: loggendInUser, status: "accepted" },
+        { fromUserId: loggedInUser._id, status: "accepted" },
+        { toUserId: loggedInUser, status: "accepted" },
       ],
     })
-      .populate("fromUserId", ["firstName", "lastName"])
-      .populate("toUserId", ["firstName", "lastName"])
+      .populate("fromUserId", ["firstName", "lastName", "photoUrl", "gender"])
+      .populate("toUserId", ["firstName", "lastName", "photoUrl", "gender"])
       .exec();
 
     const data = connectionRequest.map((request) => {
-      if (loggendInUser._id.toString() === request.fromUserId._id.toString()) {
+      if (loggedInUser._id.toString() === request.fromUserId._id.toString()) {
+        //You cant compare 2 mongo db ids you have to convert it into toString()
         return request.toUserId;
       }
 
@@ -58,64 +57,48 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 userRouter.get("/user/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
-    //validations or Checks
-    // 1.Check that in the list of feed the loggedIn user should not be one of them
-    // 2.Check if the list of feed should not be connected to loggedInuser
 
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    const skip = (page - 1) * limit;
+    console.log("loggedInUser", loggedInUser);
+    //Find all the connection request (sent and received)
     const connectionRequest = await ConnectionRequestSchema.find({
       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
     }).select("fromUserId toUserId");
+    // console.log("connectionRequest", connectionRequest);
 
     const previousRequests = new Set();
-
+    //msp through the entire connection request and add the id of the people to the previousRequest list
     connectionRequest.forEach((req) => {
       previousRequests.add(req.toUserId.toString());
       previousRequests.add(req.fromUserId.toString());
     });
 
-    const data = await UserSchema.find({
-      _id: { $nin: Array.from(previousRequests) },
-    }).select("firstName lastName skills age");
+    // previousRequests.add(loggedInUser._id.toString());
 
+    const data = await UserSchema.find({
+      $and: [
+        {
+          _id: {
+            $nin: Array.from(previousRequests),
+          },
+        },
+        {
+          _id: {
+            $ne: loggedInUser._id,
+          },
+        },
+      ],
+    })
+      .select("firstName lastName skills age photoUrl gender")
+      .limit(limit)
+      .skip(skip);
+    console.log("data", data);
     res.json({ data: data });
   } catch (err) {
     res.status(400).send("ERROR " + err.message);
   }
 });
-
-// userRouter.get("/user/feed", userAuth, async (req, res) => {
-//   try {
-//     const loggedInUser = req.user;
-//     //validations or Checks
-//     // 1.Check that in the list of feed the loggedIn user should not be one of them
-//     // 2.Check if the list of feed should not be connected to loggedInuser
-//     const userConnections = await UserSchema.find({}).exec();
-
-//     const data = userConnections.filter(
-//       (connection) => connection._id.toString() !== loggedInUser._id.toString()
-//     );
-
-//     const loggedInUserConnections = await ConnectionRequestSchema.find({
-//       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
-//     })
-//       .populate("fromUserId", ["_id"])
-//       .populate("toUserId", ["_id"]);
-
-//     const presentConnectionList = loggedInUserConnections.map((request) => {
-//       if (loggedInUser._id.toString() === request.toUserId._id.toString()) {
-//         return request.fromUserId._id.toString();
-//       }
-//       return request.toUserId._id.toString();
-//     });
-
-//     const correctList = data.filter(
-//       (request) => !presentConnectionList.includes(request._id.toString())
-//     );
-
-//     res.json({ data: data });
-//   } catch (err) {
-//     res.status(400).send("ERROR " + err.message);
-//   }
-// });
 
 module.exports = userRouter;
