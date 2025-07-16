@@ -9,7 +9,7 @@ const userAuth = async (req, res, next) => {
       throw new Error("Please login!");
     }
     //decode the data using this token
-    const decodedObj = await jwt.verify(token, "DevConnects$1206");
+    const decodedObj = await jwt.verify(token, process.env.JWT_SECRET);
     const { _id } = decodedObj;
     const loggedInUser = await UserSchema.findById(_id).exec();
     req.user = loggedInUser;
@@ -22,5 +22,5 @@ const userAuth = async (req, res, next) => {
 module.exports = { userAuth };
 
 //Read the token from the req cookies
-//Validate the token 
+//Validate the token
 //Find the user

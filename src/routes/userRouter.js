@@ -61,7 +61,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
     const skip = (page - 1) * limit;
-    console.log("loggedInUser", loggedInUser);
+    // console.log("loggedInUser", loggedInUser);
     //Find all the connection request (sent and received)
     const connectionRequest = await ConnectionRequestSchema.find({
       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
@@ -94,7 +94,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       .select("firstName lastName skills age photoUrl gender")
       .limit(limit)
       .skip(skip);
-    console.log("data", data);
+    // console.log("data", data);
     res.json({ data: data });
   } catch (err) {
     res.status(400).send("ERROR " + err.message);

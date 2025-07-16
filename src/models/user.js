@@ -60,11 +60,11 @@ const UserSchema = new mongoose.Schema(
 
 UserSchema.methods.getJWT = async function () {//do not user arrow function
   const user = this;//using the userSchema model i am crreatinga instance of the model so when i use this it reference to the current instance
-  
+
   const token = await jwt.sign({ _id: user._id }, "DevConnects$1206", {
     expiresIn: "7d",
   });
-  
+
   return token;
 };
 

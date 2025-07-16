@@ -2,6 +2,8 @@ const express = require("express");
 const { userAuth } = require("../middlewares/auth");
 const ConnectionRequestSchema = require("../models/userConnection");
 const UserSchema = require("../models/user");
+const sendEmail = require("../utils/sendEmail");
+// require("dotenv").config();
 
 const requestRouter = express.Router();
 
@@ -57,6 +59,9 @@ requestRouter.post(
 
       await userConnectionRequest.save();
 
+      const emailResponse = await sendEmail();
+      console.log(emailResponse);
+
       res.json({
         message: "User sent the request successfully",
         data: userConnectionRequest,
@@ -73,8 +78,6 @@ requestRouter.post(
   async (req, res) => {
     try {
       const loggedInUser = req.user;
-      // const requestId = req.params.requestId;
-      // const status = req.params.status;
       const { requestId, status } = req.params;
 
       //validations
